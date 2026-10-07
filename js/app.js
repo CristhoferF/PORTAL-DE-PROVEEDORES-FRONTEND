@@ -85,7 +85,8 @@ const ROLE_PERMISSIONS = {
   'Aprobador': ['prospecto', 'prospectos', 'coti', 'cotiDet', 'oc', 'ocDet', 'cc', 'ccDet', 'fac', 'facDet', 'ruc', 'bandeja', 'solicitudes', 'categorias'],
   'Comprador': ['prospecto', 'prospectos', 'coti', 'cotiDet', 'oc', 'ocDet', 'cc', 'ccDet', 'ruc', 'bandeja', 'solicitudes', 'categorias', 'fac', 'facDet'],
   'Compliance': ['prospecto', 'prospectos', 'bandeja', 'solicitudes'],
-  'Contable': ['fac', 'facDet']
+  'Contable': ['fac', 'facDet'],
+  'Finanzas': ['fac', 'facDet']
 };
 
 function renderNav() {
@@ -505,7 +506,8 @@ function vPros1() {
                  <option value="Aprobador">Aprobador de Proveedores</option>
                  <option value="Comprador">Comprador</option>
                  <option value="Compliance">Compliance</option>
-                 <option value="Contable">Contabilidad / Finanzas</option>
+                 <option value="Contable">Contabilidad</option>
+                 <option value="Finanzas">Finanzas</option>
               </select>
            </div>
            
@@ -543,8 +545,7 @@ function vPros1() {
             S.route = 'prospecto';
             S.sel = '20539627938';
           }
-
-          else if (role === 'Contable') S.route = 'fac';
+          else if (role === 'Contable' || role === 'Finanzas') S.route = 'fac';
           else S.route = 'prospectos';
 
           $('#topUserName').textContent = role === 'Proveedor' ? 'Prov. Lumar EIRL' : 'Usuario LJM';

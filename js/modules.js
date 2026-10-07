@@ -747,14 +747,17 @@ function vFac() {
   const parseMonto = m => parseFloat(String(m).replace(/[^0-9.-]+/g,"")) || 0;
   const metrics = {
     total: FAC.reduce((s, c) => s + parseMonto(c.monto), 0),
-    pagado: FAC.filter(c => c.estado === 'PAGADO').reduce((s, c) => s + parseMonto(c.monto), 0),
     rev: FAC.filter(c => c.estado === 'EN REVISION').reduce((s, c) => s + parseMonto(c.monto), 0),
-    pend: FAC.filter(c => c.estado === 'OBSERVADO' || c.estado === 'POR PAGAR' || c.estado === 'APROBADO').reduce((s, c) => s + parseMonto(c.monto), 0)
+    aceptado: FAC.filter(c => c.estado === 'ACEPTADO').reduce((s, c) => s + parseMonto(c.monto), 0),
+    observado: FAC.filter(c => c.estado === 'OBSERVADO').reduce((s, c) => s + parseMonto(c.monto), 0),
+    pagado: FAC.filter(c => c.estado === 'PAGADO').reduce((s, c) => s + parseMonto(c.monto), 0)
   };
 
   const c_total = FAC.length;
-  const c_pagadas = FAC.filter(c => c.estado === 'PAGADO').length;
   const c_rev = FAC.filter(c => c.estado === 'EN REVISION').length;
+  const c_aceptado = FAC.filter(c => c.estado === 'ACEPTADO').length;
+  const c_observado = FAC.filter(c => c.estado === 'OBSERVADO').length;
+  const c_pagado = FAC.filter(c => c.estado === 'PAGADO').length;
 
   return `<div class="pros-fixed-layout">
     <div class="head" style="margin-bottom:24px;">
@@ -766,9 +769,10 @@ function vFac() {
     
     <div class="ui-metrics">
       <div class="ui-metric"><span class="ui-metric-lbl">Total Facturado</span><span class="ui-metric-val">${formatMoney(metrics.total)}</span></div>
+      <div class="ui-metric"><span class="ui-metric-lbl">En Revisión</span><span class="ui-metric-val" style="color:var(--info)">${formatMoney(metrics.rev)}</span></div>
+      <div class="ui-metric"><span class="ui-metric-lbl">Aceptado</span><span class="ui-metric-val" style="color:var(--ok)">${formatMoney(metrics.aceptado)}</span></div>
       <div class="ui-metric"><span class="ui-metric-lbl">Pagado</span><span class="ui-metric-val" style="color:var(--ok)">${formatMoney(metrics.pagado)}</span></div>
-      <div class="ui-metric"><span class="ui-metric-lbl">En Revisión</span><span class="ui-metric-val" style="color:var(--warn)">${formatMoney(metrics.rev)}</span></div>
-      <div class="ui-metric"><span class="ui-metric-lbl">Por Pagar</span><span class="ui-metric-val">${formatMoney(metrics.pend)}</span></div>
+      <div class="ui-metric"><span class="ui-metric-lbl">Observado</span><span class="ui-metric-val" style="color:var(--warn)">${formatMoney(metrics.observado)}</span></div>
     </div>
     
     <div class="card" style="padding:0; overflow:hidden">
@@ -777,7 +781,9 @@ function vFac() {
           <div class="ui-tabs" id="facTabs">
             <button class="ui-tab active" data-filter="ALL">Todas (${c_total})</button>
             <button class="ui-tab" data-filter="EN REVISION">En revisión (${c_rev})</button>
-            <button class="ui-tab" data-filter="PAGADO">Pagadas (${c_pagadas})</button>
+            <button class="ui-tab" data-filter="ACEPTADO">Aceptado (${c_aceptado})</button>
+            <button class="ui-tab" data-filter="PAGADO">Pagadas (${c_pagado})</button>
+            <button class="ui-tab" data-filter="OBSERVADO">Observado (${c_observado})</button>
           </div>
           <div class="ui-search">
             ${ic('search')}
@@ -789,11 +795,13 @@ function vFac() {
         <table class="ui-table mobile-cards" style="margin:0; border-bottom:0">
           <thead>
             <tr>
-              <th style="width:40px"></th>
               <th>Factura</th>
               <th>Estado</th>
               <th>Emisión &rarr; Venc.</th>
               <th class="right">Monto</th>
+              <th>Pago</th>
+              <th>Retención</th>
+              <th>Detracción</th>
               <th>Documentos</th>
             </tr>
           </thead>
@@ -833,37 +841,28 @@ function bindFac() {
 
     tbody.innerHTML = filtered.map(c => {
       let stClass = '--neutral';
-      if(c.estado === 'PAGADO') stClass = '--ok';
+      if(c.estado === 'ACEPTADO' || c.estado === 'PAGADO') stClass = '--ok';
       if(c.estado === 'EN REVISION') stClass = '--review';
-      if(c.estado === 'OBSERVADO' || c.estado === 'RECHAZADO') stClass = '--error';
+      if(c.estado === 'OBSERVADO') stClass = '--error';
 
       const docCount = Object.values(c.docs || {}).filter(v => v === 'ACEPTADO' || v === 'EN REVISION').length;
       const docLabel = docCount > 0 ? `Ver docs (${docCount})` : 'Ver docs';
 
       const getDetail = (obj, title) => {
-        if(!obj) return `<div class="ui-detail-item"><strong>${title}</strong><span style="color:var(--line)">—</span></div>`;
-        return `<div class="ui-detail-item"><strong>${title}</strong><span style="color:var(--ink)">Op: ${obj.n_operacion}</span><br><span class="muted">Cta: ${obj.cuenta} &middot; ${formatDate(obj.fecha)}</span></div>`;
+        if(!obj) return `<span style="color:var(--line)">—</span>`;
+        return `<span style="color:var(--ink);font-size:13.5px;">Op: ${obj.n_operacion}</span><br><span class="muted" style="font-size:12px;color:var(--mut)">Cta: ${obj.cuenta} &middot; ${formatDate(obj.fecha)}</span>`;
       };
 
       return `
         <tr class="item-row" data-id="${c.id}" style="cursor:pointer">
-          <td data-label=""><button class="ui-expand-btn" title="Ver detalles de pago">${ic('chevron-down')}</button></td>
           <td data-label="Factura"><span style="font-weight:600; font-size:15px; color:var(--ink)">${c.id}</span></td>
           <td data-label="Estado"><div class="ui-status ${stClass}"><div class="dot"></div>${c.estado}</div></td>
           <td data-label="Fechas" style="color:var(--mut); font-size:13.5px">${formatDate(c.fechaEmision)} &rarr; ${formatDate(c.fechaVencimiento)}</td>
           <td data-label="Monto" class="right font-semibold" style="color:var(--ink)">${formatMoney(c.monto, c.moneda)}</td>
+          <td data-label="Pago">${getDetail(c.pago, 'Pago')}</td>
+          <td data-label="Retención">${getDetail(c.retencion, 'Retención')}</td>
+          <td data-label="Detracción">${getDetail(c.detraccion, 'Detracción')}</td>
           <td data-label="Documentos"><button class="btn o sm btn-doc-fac" style="font-size:13px">${docLabel}</button></td>
-        </tr>
-        <tr class="ui-expand-row" data-exp="${c.id}">
-          <td colspan="6">
-            <div class="ui-expand-content">
-              <div class="ui-detail-grid">
-                ${getDetail(c.pago, 'Pago')}
-                ${getDetail(c.retencion, 'Retención')}
-                ${getDetail(c.detraccion, 'Detracción')}
-              </div>
-            </div>
-          </td>
         </tr>
       `;
     }).join('');
@@ -871,21 +870,9 @@ function bindFac() {
     document.querySelectorAll('.item-row').forEach(tr => {
       tr.onclick = (e) => {
         const id = tr.dataset.id;
-        if (e.target.closest('.btn-doc-fac')) {
+        if (e.target.closest('.btn-doc-fac') || e.target.closest('td[data-label="Documentos"]')) {
           go('facDet', id);
           return;
-        }
-        const expRow = document.querySelector(`.ui-expand-row[data-exp="${id}"]`);
-        const btnExp = tr.querySelector('.ui-expand-btn');
-        if(expRow) {
-          const isOpen = expRow.classList.contains('open');
-          if(isOpen) {
-            expRow.classList.remove('open');
-            if(btnExp) btnExp.classList.remove('open');
-          } else {
-            expRow.classList.add('open');
-            if(btnExp) btnExp.classList.add('open');
-          }
         }
       };
     });
@@ -919,9 +906,12 @@ function vFacDet(){
       <div><h2>Factura: ${c.id}</h2>
       <div class="meta"><span><span class="mono" style="color:#667085">OC:</span> <span class="badge b-info">${c.ocId}</span></span><span><span class="dot" style="background:${c.estado==='PAGADO'?'#16a34a':'#f59e0b'}"></span>${c.estado}</span></div>
       <div class="ct"><span>Proveedor: <b>${c.prov}</b></span><span>Monto: <b style="color:#047857;font-size:16px">${c.monto} ${c.moneda}</b></span><span>Emisión: <b>${c.fechaEmision}</b></span></div></div>
-      ${S.userRole === 'Contable' ? `<div style="display:flex;gap:10px">
+      ${S.userRole === 'Contable' && c.estado === 'EN REVISION' ? `<div style="display:flex;gap:10px">
         <button class="btn o sm" onclick="observarFac('${c.id}')">Observar</button>
-        <button class="btn p sm" onclick="aprobarPagoFac('${c.id}')">Aprobar Pago</button>
+        <button class="btn p sm" onclick="aceptarFac('${c.id}')">Aceptar Factura</button>
+      </div>` : ''}
+      ${S.userRole === 'Finanzas' && c.estado === 'ACEPTADO' ? `<div style="display:flex;gap:10px">
+        <button class="btn p sm" onclick="aprobarPagoFac('${c.id}')">Marcar como Pagado</button>
       </div>` : ''}
     </div></div>
     
@@ -1393,6 +1383,13 @@ window.generarOCSeleccionada = function() {
   toast('Orden de Compra pre-generada y adjudicada.');
   render();
   setTimeout(()=>go('oc'), 1200);
+};
+
+window.aceptarFac = function(id) {
+  const f = FAC.find(x => x.id === id);
+  if(f) f.estado = 'ACEPTADO';
+  toast('Factura validada y aceptada.');
+  render();
 };
 
 window.aprobarPagoFac = function(id) {

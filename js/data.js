@@ -164,7 +164,7 @@ const RECEPCIONES_PENDIENTES = [
 const FAC=[
   {
     id:'F001-000452', ocId:'OC-2026-089', prov:'GRUPO FREMAT S.A.C.', monto:'113.87', moneda:'PEN', 
-    fechaEmision:'13-May-2026', fechaVencimiento:'13-Jun-2026', estado:'PAGADO', 
+    fechaEmision:'13-May-2026', fechaVencimiento:'13-Jun-2026', estado:'ACEPTADO', 
     pago: { n_operacion: 'OP-99823', cuenta: 'BCP ***392', fecha: '14-Jun-2026' },
     retencion: { n_operacion: 'RET-112', cuenta: 'BN ***111', fecha: '14-Jun-2026' },
     detraccion: { n_operacion: 'DET-881', cuenta: 'BN ***222', fecha: '14-Jun-2026' },
