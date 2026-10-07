@@ -1,0 +1,110 @@
+---
+config:
+  theme: mc
+---
+flowchart TD
+    subgraph REG["1. REGISTRO DE PROVEEDORES"]
+        direction TB
+        R1["Paso 1: Ingreso al portal<br/>(página web o link por correo / WhatsApp)<br/><i>No requiere elegir categorías antes de invitar</i>"]
+        R2["Paso 2: Validación RUC"]
+        RD1{"¿No Domiciliado?"}
+        RD2{"¿RUC activo<br/>y HABIDO?"}
+        RX(["Proveedor no aceptado"])
+        R3["Paso 3: Creación de usuario y contraseña"]
+        RD3{"¿No Domiciliado?"}
+        R4["Paso 4: Portal muestra información SUNAT<br/>(incluye fecha de inicio de actividades)"]
+        R5["Paso 5: Registro de información<br/>• Contactos comerciales y contables<br/>• Categorías de compra<br/>• Información bancaria<br/>  Nacional: banco, tipo, cuenta, CCI, titular<br/>  ND: banco, cuenta, SWIFT, titular"]
+        R6["Paso 6: Carga de documentación"]
+        R6a["Nacionales: Ficha RUC, Reporte tributario, DNI representantes, Certificado Único Laboral,<br/>Copia literal y Cert. existencia legal (≤ 90 días), DJ general, PEP, Formato de creación, Licencias, ISO"]
+        R6b["No domiciliados: Registro tributario origen, Cert. existencia legal (≤ 90 días),<br/>ID representantes, DJ cumplimiento, Carta presentación, Formato de creación, Licencias"]
+        R6c["Según tipo: Transportistas (MTC), Contratistas (RENOC), Insumos químicos (IQBF, MATPEL),<br/>Intermediación laboral (RENIL), Explosivos (SUCAMEC)"]
+        R6d["Adicionales: Brochure, Cartas de representación, Referencias comerciales"]
+        R7["Paso 7: Evaluación en plataformas<br/>SENTINEL – CUMPLO 360"]
+        R8{"Paso 8: Estado de evaluación"}
+
+        R1 --> R2 --> RD1
+        RD1 -- "Sí (pase directo)" --> R3
+        RD1 -- No --> RD2
+        RD2 -- No --> RX
+        RD2 -- Sí --> R3
+        R3 --> RD3
+        RD3 -- No --> R4 --> R5
+        RD3 -- Sí --> R5
+        R5 --> R6
+        R6 --> R6a & R6b
+        R6a & R6b --> R6c --> R6d --> R7 --> R8
+    end
+
+    E1(["ACEPTADO<br/>Pasó evaluación logística y plataformas"])
+    E2(["OBSERVADO<br/>Documentos u evaluación con observaciones"])
+    E3(["RECHAZADO<br/>No pasó logística ni compliance"])
+    E4(["EN EVALUACIÓN<br/>Puede ser invitado a cotizar; se evalúa<br/>cuando un comprador lo requiera"])
+    E5(["BLOQUEADO<br/>Lista negra: observaciones logísticas, tributarias o legales"])
+
+    R8 --> E1
+    R8 --> E2
+    R8 --> E3
+    R8 --> E4
+    R8 --> E5
+    E2 -. "Subsana observaciones" .-> R6
+
+    subgraph COT["2. PROCESO DE COTIZACIÓN"]
+        direction TB
+        C1["Paso 1: Comprador selecciona requerimientos a cotizar en el ERP"]
+        C2["Paso 2: Portal sugiere proveedores<br/>según la subfamilia del producto"]
+        C3["Paso 3: Comprador elige proveedores a invitar<br/>• Adjunta TDR, planos, etc.<br/>• Define plazo límite de propuestas"]
+        C4["Paso 4: Proveedor ingresa precios y comentarios por línea<br/>Cabecera/pie: condición de pago, tiempo y lugar de entrega, garantía, flete hasta planta"]
+        C5["Paso 5: Proveedor carga propuesta técnica, económica y otros<br/>(múltiples archivos, incluso ZIP) y envía"]
+        C6["Notificación al comprador"]
+        C1 --> C2 --> C3 --> C4 --> C5 --> C6
+    end
+
+    E1 --> C2
+    E4 --> C2
+
+    subgraph EVA["3. PROCESO DE EVALUACIÓN"]
+        direction TB
+        V1{"¿Venció el plazo límite?"}
+        V2["Portal bloquea el registro de propuestas"]
+        V3["Portal presenta cuadro comparativo<br/>(precios más bajos total y por línea, mejores condiciones de pago)<br/>y notifica al comprador"]
+        V4["Comprador elige qué comprar a cada proveedor<br/>y registra sustento en 'Decisión de Compra'<br/><i>Archivo de cada proveedor exportable</i>"]
+        V5["Clic en Aceptar"]
+        V6["Se generan automáticamente las OC<br/>pendientes de aprobación en el ERP"]
+        V1 -- Sí --> V2 --> V3 --> V4 --> V5 --> V6
+    end
+
+    C6 --> V1
+
+    subgraph OC["4. PROCESO DE ENVÍO DE OC"]
+        direction TB
+        O1["Comprador solicita aprobación de OC en el ERP"]
+        O2{"¿OC aprobada?"}
+        O3["OC llega automáticamente por correo<br/>al proveedor y al comprador"]
+        O4{"Respuesta del proveedor"}
+        O5(["OC aceptada"])
+        O6(["OC cancelada"])
+        O7(["OC no emitida"])
+        O1 --> O2
+        O2 -- Sí --> O3 --> O4
+        O2 -- No --> O7
+        O4 -- Acepta --> O5
+        O4 -- Cancela --> O6
+    end
+
+    V6 --> O1
+
+    subgraph EXC["Permisos excepcionales de Logística"]
+        direction TB
+        X1["Logística gestiona reseteo de contraseñas (Paso 3 registro)"]
+        X2["Comprador accede al usuario del proveedor<br/>para completar o actualizar propuesta (Paso 4 cotización)"]
+        X3["Comprador amplía la convocatoria de cotización (Paso 3 cotización)"]
+    end
+
+
+    classDef estado fill:#eef,stroke:#667,stroke-width:1px;
+    classDef ok fill:#e3f6e8,stroke:#2e7d32;
+    classDef warn fill:#fff4d6,stroke:#b7791f;
+    classDef bad fill:#fde4e4,stroke:#c62828;
+    class E1,O5 ok;
+    class E2,E4 warn;
+    class E3,E5,RX,O6,O7 bad;
